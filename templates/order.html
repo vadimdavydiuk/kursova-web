@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}Замовлення №{{ order.id }} — ПіцаДім{% endblock %}
+{% block content %}
+<section class="done">
+    <p class="eyebrow">Замовлення прийнято</p>
+    <h1>№{{ order.id }}</h1>
+    <p>{{ order.name }}, кур’єр зателефонує на {{ order.phone }}.</p>
+    <p>Адреса: {{ order.address }}</p>
+    <ul>
+        {% for item in order.items %}
+            <li>{{ item.pizza.name }} — {{ sizes[item.size][0] }} × {{ item.quantity }}</li>
+        {% endfor %}
+    </ul>
+    <p class="total">Сума: <strong>{{ order.total }} грн</strong></p>
+    <a class="button" href="{{ url_for('menu') }}">Замовити ще</a>
+</section>
+{% endblock %}

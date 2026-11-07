@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block title %}Адмінпанель — ПіцаДім{% endblock %}
+{% block content %}
+<section>
+    <div class="section-head">
+        <h1>Замовлення</h1>
+        <form action="{{ url_for('logout') }}" method="post">
+            <button class="text-button" type="submit">Вийти</button>
+        </form>
+    </div>
+    {% if orders %}
+        {% for order in orders %}
+            <article class="admin-card">
+                <header>
+                    <div>
+                        <strong>№{{ order.id }}</strong>
+                        <span>{{ order.created_at.strftime('%d.%m.%Y %H:%M') }}</span>
+                    </div>
+                    <span class="status status-{{ order.status }}">{{ statuses[order.status] }}</span>
+                </header>
+                <p>{{ order.name }} · {{ order.phone }}</p>
+                <p>{{ order.address }}</p>
+                {% if order.comment %}<p>Коментар: {{ order.comment }}</p>{% endif %}
+                <ul>
+                    {% for item in order.items %}
+                        <li>{{ item.pizza.name }}, {{ sizes[item.size][0] }} × {{ item.quantity }} — {{ item.price * item.quantity }} грн</li>
+                    {% endfor %}
+                </ul>
+                <p class="total">Разом: <strong>{{ order.total }} грн</strong></p>
+                <div class="admin-actions">
+                    <form action="{{ url_for('update_status', order_id=order.id) }}" method="post">
+                        <select name="status">
+                            {% for key, label in statuses.items() %}
+                                <option value="{{ key }}" {{ 'selected' if order.status == key else '' }}>{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                        <button class="button" type="submit">Оновити</button>
+                    </form>
+                    <form action="{{ url_for('delete_order', order_id=order.id) }}" method="post" data-confirm="Видалити замовлення?">
+                        <button class="text-button" type="submit">Видалити</button>
+                    </form>
+                </div>
+            </article>
+        {% endfor %}
+    {% else %}
+        <p class="empty">Замовлень ще немає.</p>
+    {% endif %}
+</section>
+
+<section>
+    <h2>Повідомлення</h2>
+    {% for message in messages %}
+        <article class="admin-card">
+            <header>
+                <strong>{{ message.name }}</strong>
+                <span>{{ message.created_at.strftime('%d.%m.%Y %H:%M') }}</span>
+            </header>
+            <p>{{ message.phone }}</p>
+            <p>{{ message.message }}</p>
+            <form action="{{ url_for('delete_message', message_id=message.id) }}" method="post" data-confirm="Видалити повідомлення?">
+                <button class="text-button" type="submit">Видалити</button>
+            </form>
+        </article>
+    {% else %}
+        <p class="empty">Повідомлень немає.</p>
+    {% endfor %}
+</section>
+{% endblock %}

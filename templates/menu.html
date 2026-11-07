@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}Меню — ПіцаДім{% endblock %}
+{% block content %}
+<section>
+    <div class="section-head">
+        <h1>Меню</h1>
+    </div>
+    <div class="filters" data-filters>
+        <a class="{{ 'active' if category == 'all' else '' }}" href="{{ url_for('menu') }}">Усі</a>
+        <a class="{{ 'active' if category == 'classic' else '' }}" href="{{ url_for('menu', category='classic') }}">Класичні</a>
+        <a class="{{ 'active' if category == 'meat' else '' }}" href="{{ url_for('menu', category='meat') }}">М’ясні</a>
+        <a class="{{ 'active' if category == 'cheese' else '' }}" href="{{ url_for('menu', category='cheese') }}">Сирні</a>
+        <a class="{{ 'active' if category == 'spicy' else '' }}" href="{{ url_for('menu', category='spicy') }}">Гострі</a>
+        <a class="{{ 'active' if category == 'veggie' else '' }}" href="{{ url_for('menu', category='veggie') }}">Овочеві</a>
+    </div>
+    <div class="grid">
+        {% for pizza in pizzas %}
+            <article class="card">
+                {% if pizza.badge %}<span class="badge">{{ pizza.badge }}</span>{% endif %}
+                <h3>{{ pizza.name }}</h3>
+                <p>{{ pizza.description }}</p>
+                <form action="{{ url_for('add_to_cart') }}" method="post" class="order-form" data-price="{{ pizza.price }}">
+                    <label>Розмір
+                        <select name="size">
+                            {% for key, (label, _) in sizes.items() %}
+                                <option value="{{ key }}" {{ 'selected' if key == 'medium' else '' }}>{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </label>
+                    <label>Кількість
+                        <input type="number" name="quantity" value="1" min="1" max="10">
+                    </label>
+                    <input type="hidden" name="pizza_id" value="{{ pizza.id }}">
+                    <div class="card-foot">
+                        <strong data-live-price>{{ pizza.price }} грн</strong>
+                        <button class="button" type="submit">До кошика</button>
+                    </div>
+                </form>
+            </article>
+        {% else %}
+            <p>У цій категорії ще немає піци.</p>
+        {% endfor %}
+    </div>
+</section>
+{% endblock %}

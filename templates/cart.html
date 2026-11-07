@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}Кошик — ПіцаДім{% endblock %}
+{% block content %}
+<section>
+    <h1>Кошик</h1>
+    {% if items %}
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr><th>Піца</th><th>Розмір</th><th>К-сть</th><th>Сума</th><th></th></tr>
+                </thead>
+                <tbody>
+                    {% for item in items %}
+                        <tr>
+                            <td>{{ item.pizza.name }}</td>
+                            <td>{{ item.size_label }}</td>
+                            <td>{{ item.quantity }}</td>
+                            <td>{{ item.line }} грн</td>
+                            <td>
+                                <form action="{{ url_for('remove_from_cart') }}" method="post">
+                                    <input type="hidden" name="key" value="{{ item.key }}">
+                                    <button class="text-button" type="submit">Прибрати</button>
+                                </form>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <p class="total">До сплати: <strong>{{ total }} грн</strong></p>
+        <form action="{{ url_for('checkout') }}" method="post" class="form checkout">
+            <h2>Дані доставки</h2>
+            <label>Ім’я<input type="text" name="name" required minlength="2"></label>
+            <label>Телефон<input type="tel" name="phone" required placeholder="+380..." data-phone></label>
+            <label>Адреса<input type="text" name="address" required minlength="5" placeholder="Вулиця, будинок, квартира"></label>
+            <label>Коментар<textarea name="comment" placeholder="Домофон, поверх, без цибулі"></textarea></label>
+            <button class="button" type="submit">Оформити замовлення</button>
+        </form>
+    {% else %}
+        <p class="empty">Кошик порожній. <a href="{{ url_for('menu') }}">Перейти до меню</a></p>
+    {% endif %}
+</section>
+{% endblock %}
