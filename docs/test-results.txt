@@ -1,0 +1,63 @@
+
+=== unit_tests.py ===
+test_all_240_menu_combinations (__main__.CartUnitTests.test_all_240_menu_combinations) ... ok
+test_empty_cart (__main__.CartUnitTests.test_empty_cart) ... ok
+test_empty_total_avoids_lookup (__main__.CartUnitTests.test_empty_total_avoids_lookup) ... ok
+test_half_rounds_up (__main__.CartUnitTests.test_half_rounds_up) ... ok
+test_invalid_quantities (__main__.CartUnitTests.test_invalid_quantities) ... ok
+test_invalid_size (__main__.CartUnitTests.test_invalid_size) ... ok
+test_malformed_keys (__main__.CartUnitTests.test_malformed_keys) ... ok
+test_missing_pizza (__main__.CartUnitTests.test_missing_pizza) ... ok
+test_multiple_sizes (__main__.CartUnitTests.test_multiple_sizes) ... ok
+test_non_dictionary_cart (__main__.CartUnitTests.test_non_dictionary_cart) ... ok
+test_round_unit_before_quantity (__main__.CartUnitTests.test_round_unit_before_quantity) ... ok
+test_supplied_total (__main__.CartUnitTests.test_supplied_total) ... ok
+test_total_reads_cart_when_omitted (__main__.CartUnitTests.test_total_reads_cart_when_omitted) ... ok
+test_boundary_values (__main__.CheckoutValidationUnitTests.test_boundary_values) ... ok
+test_maximum_lengths (__main__.CheckoutValidationUnitTests.test_maximum_lengths) ... ok
+test_minimum_lengths (__main__.CheckoutValidationUnitTests.test_minimum_lengths) ... ok
+test_missing_fields (__main__.CheckoutValidationUnitTests.test_missing_fields) ... ok
+test_optional_comment (__main__.CheckoutValidationUnitTests.test_optional_comment) ... ok
+test_strips_whitespace (__main__.CheckoutValidationUnitTests.test_strips_whitespace) ... ok
+test_valid_fields (__main__.CheckoutValidationUnitTests.test_valid_fields) ... ok
+test_all_post_routes_reject_missing_and_wrong_csrf (__main__.SecurityIntegrationTests.test_all_post_routes_reject_missing_and_wrong_csrf) ... ok
+test_all_rendered_forms_have_csrf (__main__.SecurityIntegrationTests.test_all_rendered_forms_have_csrf) ... ok
+test_invalid_checkout_does_not_write (__main__.SecurityIntegrationTests.test_invalid_checkout_does_not_write) ... ok
+test_login_hides_demo_credentials (__main__.SecurityIntegrationTests.test_login_hides_demo_credentials) ... ok
+test_no_default_admin (__main__.SecurityIntegrationTests.test_no_default_admin) ... ok
+test_non_ascii_csrf_is_rejected (__main__.SecurityIntegrationTests.test_non_ascii_csrf_is_rejected) ... ok
+test_order_owner_stranger_and_admin (__main__.SecurityIntegrationTests.test_order_owner_stranger_and_admin) ... ok
+test_zero_quantity_rejected (__main__.SecurityIntegrationTests.test_zero_quantity_rejected) ... ok
+
+----------------------------------------------------------------------
+Ran 28 tests in 0.280s
+
+OK
+
+=== integration_tests.py ===
+
+Результат: пройдено 24 з 24
+OK    1. Відкриття головної сторінки (GET /)
+OK    2. Відкриття меню (GET /menu)
+OK    3. Фільтр категорії «Гострі»
+OK    4. Додавання піци до кошика (Пепероні, велика, 2 шт.)
+OK    5. Розрахунок суми: 239 грн × 1,3 × 2
+OK    6. Додавання з неіснуючим розміром («huge»)
+OK    7. Кількість більша за ліміт (11 шт.)
+OK    8. Накопичення кількості понад 10 (2 + 9)
+OK    9. Видалення позиції з кошика
+OK   10. Оформлення замовлення з порожнім кошиком
+OK   11. Оформлення з некоректними даними (ім’я, телефон, адреса)
+OK   12. Оформлення коректного замовлення (Маргарита, середня, 1 шт.)
+OK   13. Сторінка підтвердження замовлення
+OK   14. Доступ до /admin без авторизації
+OK   15. Зміна статусу без авторизації
+OK   16. Вхід з хибним паролем
+OK   17. Вхід з правильними обліковими даними
+OK   18. Зміна статусу замовлення на «Готується»
+OK   19. Зміна статусу на неіснуюче значення
+OK   20. Форма зворотного зв’язку з некоректними даними
+OK   21. Форма зворотного зв’язку з коректними даними
+OK   22. Видалення замовлення адміністратором
+OK   23. Видалення повідомлення адміністратором
+OK   24. Вихід із панелі адміністратора

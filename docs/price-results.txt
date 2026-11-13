@@ -1,0 +1,1 @@
+PASS: 240/240 combinations; initial render, change and input; Pepperoni large x2 = 622 UAH.

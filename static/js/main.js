@@ -7,10 +7,12 @@ document.querySelectorAll(".order-form").forEach((form) => {
     const update = () => {
         const size = form.querySelector("[name=size]").value;
         const qty = Number(form.querySelector("[name=quantity]").value) || 1;
-        const total = Math.round(base * sizeFactor[size] * qty);
+        const unit = Math.round(base * sizeFactor[size]);
+        const total = unit * qty;
         priceNode.textContent = `${total} грн`;
     };
 
+    update();
     form.addEventListener("change", update);
     form.addEventListener("input", update);
 });

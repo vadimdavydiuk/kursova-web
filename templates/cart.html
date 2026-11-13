@@ -18,6 +18,7 @@
                             <td>{{ item.line }} грн</td>
                             <td>
                                 <form action="{{ url_for('remove_from_cart') }}" method="post">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                     <input type="hidden" name="key" value="{{ item.key }}">
                                     <button class="text-button" type="submit">Прибрати</button>
                                 </form>
@@ -29,6 +30,7 @@
         </div>
         <p class="total">До сплати: <strong>{{ total }} грн</strong></p>
         <form action="{{ url_for('checkout') }}" method="post" class="form checkout">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <h2>Дані доставки</h2>
             <label>Ім’я<input type="text" name="name" required minlength="2"></label>
             <label>Телефон<input type="tel" name="phone" required placeholder="+380..." data-phone></label>

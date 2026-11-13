@@ -5,6 +5,7 @@
     <div class="section-head">
         <h1>Замовлення</h1>
         <form action="{{ url_for('logout') }}" method="post">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <button class="text-button" type="submit">Вийти</button>
         </form>
     </div>
@@ -29,6 +30,7 @@
                 <p class="total">Разом: <strong>{{ order.total }} грн</strong></p>
                 <div class="admin-actions">
                     <form action="{{ url_for('update_status', order_id=order.id) }}" method="post">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <select name="status">
                             {% for key, label in statuses.items() %}
                                 <option value="{{ key }}" {{ 'selected' if order.status == key else '' }}>{{ label }}</option>
@@ -37,6 +39,7 @@
                         <button class="button" type="submit">Оновити</button>
                     </form>
                     <form action="{{ url_for('delete_order', order_id=order.id) }}" method="post" data-confirm="Видалити замовлення?">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <button class="text-button" type="submit">Видалити</button>
                     </form>
                 </div>
@@ -58,6 +61,7 @@
             <p>{{ message.phone }}</p>
             <p>{{ message.message }}</p>
             <form action="{{ url_for('delete_message', message_id=message.id) }}" method="post" data-confirm="Видалити повідомлення?">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <button class="text-button" type="submit">Видалити</button>
             </form>
         </article>

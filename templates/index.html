@@ -48,6 +48,7 @@
         <p>Питання щодо алергенів, великого замовлення або часу доставки.</p>
     </div>
     <form action="{{ url_for('contact') }}" method="post" class="form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <label>Ім’я<input type="text" name="name" required minlength="2"></label>
         <label>Телефон<input type="tel" name="phone" required placeholder="+380..." data-phone></label>
         <label>Повідомлення<textarea name="message" required minlength="5"></textarea></label>

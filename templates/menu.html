@@ -20,6 +20,7 @@
                 <h3>{{ pizza.name }}</h3>
                 <p>{{ pizza.description }}</p>
                 <form action="{{ url_for('add_to_cart') }}" method="post" class="order-form" data-price="{{ pizza.price }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <label>Розмір
                         <select name="size">
                             {% for key, (label, _) in sizes.items() %}

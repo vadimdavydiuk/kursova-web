@@ -1,8 +1,11 @@
 import os
+import secrets
+from decimal import Decimal, ROUND_HALF_UP
+from hmac import compare_digest
 from datetime import datetime
 from functools import wraps
 
-from flask import Flask, flash, redirect, render_template, request, session, url_for
+from flask import Flask, abort, flash, redirect, render_template, request, session, url_for
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import check_password_hash, generate_password_hash
 
@@ -10,9 +13,12 @@ BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 DB_PATH = os.path.join(BASE_DIR, "instance", "pizza.db")
 
 app = Flask(__name__)
-app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{DB_PATH}"
+app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URL", f"sqlite:///{DB_PATH}")
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-app.config["SECRET_KEY"] = os.getenv("SECRET_KEY", "pizza-coursework-key")
+app.config["SECRET_KEY"] = os.getenv("SECRET_KEY") or secrets.token_hex(32)
+
+app.config["SESSION_COOKIE_HTTPONLY"] = True
+app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
 
 db = SQLAlchemy(app)
 
@@ -77,6 +83,40 @@ class ContactMessage(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.now, nullable=False)
 
 
+def csrf_token():
+    if "csrf_token" not in session:
+        session["csrf_token"] = secrets.token_urlsafe(32)
+    return session["csrf_token"]
+
+
+@app.before_request
+def protect_post_forms():
+    if request.method == "POST":
+        expected = session.get("csrf_token", "")
+        supplied = request.form.get("csrf_token", "")
+        if not expected or not compare_digest(expected.encode(), supplied.encode()):
+            abort(400, description="Невірний CSRF-токен. Оновіть сторінку та повторіть дію.")
+
+
+def unit_price(base, size):
+    """Округлення ціни одиниці до гривні: 0,5 округлюється вгору."""
+    value = Decimal(str(base)) * Decimal(str(SIZES[size][1]))
+    return int(value.quantize(Decimal("1"), rounding=ROUND_HALF_UP))
+
+
+def validate_checkout(data):
+    """Перевірка полів без HTTP-запиту, сесії та доступу до бази."""
+    fields = {key: str(data.get(key, "") or "").strip()
+              for key in ("name", "phone", "address", "comment")}
+    digits = "".join(ch for ch in fields["phone"] if ch in "0123456789")
+    valid = (2 <= len(fields["name"]) <= 100
+             and 5 <= len(fields["address"]) <= 200
+             and 10 <= len(digits) <= 12
+             and len(fields["phone"]) <= 20
+             and len(fields["comment"]) <= 2000)
+    return fields, valid
+
+
 def admin_required(view):
     @wraps(view)
     def wrapped(*args, **kwargs):
@@ -91,12 +131,20 @@ def admin_required(view):
 def cart_items():
     raw = session.get("cart", {})
     result = []
+    if not isinstance(raw, dict):
+        return result
     for key, qty in raw.items():
-        pizza_id, size = key.split(":")
-        pizza = db.session.get(Pizza, int(pizza_id))
-        if not pizza or size not in SIZES or qty < 1:
+        if not isinstance(key, str) or not isinstance(qty, int) or isinstance(qty, bool):
             continue
-        unit = round(pizza.price * SIZES[size][1])
+        try:
+            pizza_id, size = key.split(":")
+            pizza_id = int(pizza_id)
+        except (ValueError, TypeError):
+            continue
+        pizza = db.session.get(Pizza, pizza_id)
+        if not pizza or size not in SIZES or not 1 <= qty <= 10:
+            continue
+        unit = unit_price(pizza.price, size)
         result.append({
             "key": key,
             "pizza": pizza,
@@ -115,12 +163,12 @@ def cart_total(items=None):
 
 
 def cart_count():
-    return sum(session.get("cart", {}).values())
+    return sum(item["quantity"] for item in cart_items())
 
 
 @app.context_processor
 def inject_cart():
-    return {"cart_count": cart_count(), "statuses": STATUSES}
+    return {"cart_count": cart_count(), "statuses": STATUSES, "csrf_token": csrf_token}
 
 
 @app.route("/")
@@ -142,9 +190,9 @@ def menu():
 def add_to_cart():
     pizza_id = request.form.get("pizza_id", type=int)
     size = request.form.get("size", "medium")
-    quantity = request.form.get("quantity", type=int) or 1
+    quantity = request.form.get("quantity", default=1, type=int)
     pizza = db.session.get(Pizza, pizza_id) if pizza_id else None
-    if not pizza or size not in SIZES or quantity < 1 or quantity > 10:
+    if not pizza or size not in SIZES or quantity is None or quantity < 1 or quantity > 10:
         flash("Не вдалося додати піцу до кошика.", "error")
         return redirect(url_for("menu"))
 
@@ -180,13 +228,9 @@ def checkout():
         flash("Кошик порожній.", "error")
         return redirect(url_for("menu"))
 
-    name = request.form.get("name", "").strip()
-    phone = request.form.get("phone", "").strip()
-    address = request.form.get("address", "").strip()
-    comment = request.form.get("comment", "").strip()
-    digits = "".join(ch for ch in phone if ch.isdigit())
-
-    if len(name) < 2 or len(address) < 5 or len(digits) < 10:
+    fields, valid = validate_checkout(request.form)
+    name, phone, address, comment = (fields[key] for key in ("name", "phone", "address", "comment"))
+    if not valid:
         flash("Перевірте ім’я, телефон і адресу доставки.", "error")
         return redirect(url_for("cart"))
 
@@ -209,15 +253,18 @@ def checkout():
         ))
     db.session.commit()
     session["cart"] = {}
+    session["order_ids"] = (session.get("order_ids", []) + [order.id])[-50:]
     session.modified = True
     return redirect(url_for("order_done", order_id=order.id))
 
 
 @app.route("/order/<int:order_id>")
 def order_done(order_id):
+    if not session.get("is_admin") and order_id not in session.get("order_ids", []):
+        abort(404)
     order = db.session.get(Order, order_id)
     if not order:
-        return redirect(url_for("home"))
+        abort(404)
     return render_template("order.html", order=order, sizes=SIZES)
 
 
@@ -246,6 +293,7 @@ def login():
         if not user or not user.is_admin or not check_password_hash(user.password, password):
             flash("Невірний логін або пароль.", "error")
             return redirect(url_for("login"))
+        session["csrf_token"] = secrets.token_urlsafe(32)
         session["is_admin"] = True
         session["admin_name"] = user.name
         return redirect(url_for("admin"))
@@ -256,6 +304,7 @@ def login():
 def logout():
     session.pop("is_admin", None)
     session.pop("admin_name", None)
+    session["csrf_token"] = secrets.token_urlsafe(32)
     flash("Ви вийшли з панелі адміністратора.", "success")
     return redirect(url_for("home"))
 
@@ -301,11 +350,12 @@ def delete_message(message_id):
 
 
 def seed():
-    if User.query.filter_by(login="admin").first() is None:
+    admin_password = os.getenv("ADMIN_PASSWORD")
+    if admin_password and User.query.filter_by(login="admin").first() is None:
         db.session.add(User(
             name="Адміністратор",
             login="admin",
-            password=generate_password_hash("admin123"),
+            password=generate_password_hash(admin_password),
             is_admin=True,
         ))
     if Pizza.query.first() is None:
@@ -337,4 +387,4 @@ with app.app_context():
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=False)
